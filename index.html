@@ -10,7 +10,7 @@
     #controls { width: 200px; padding: 10px; background: #f4f4f4; display: flex; flex-direction: column; }
     button { margin-bottom: 8px; width: 100%; }
     #colorStats {
-      margin-top: auto; 
+      margin-top: auto;
       padding: 6px; 
       border: 1px solid #ccc; 
       font-size: 14px; 
@@ -32,6 +32,8 @@
     <button id="rigidGraphBtn">Rigid Graph: Off</button>
     <button id="rGraphBtn">Random Graph</button>
     <button id="dsaturBtn">DSATUR K-Color</button>
+    <!-- New button below -->
+    <button id="deltaColourBtn">Colour</button>
     <div id="colorStats"></div>
   </div>
 </div>
@@ -48,7 +50,7 @@ let options = {
     size: 120,
     color: { border: 'black', background: 'black' },
     font: { color: 'white', align: 'center' },
-    mass: 0.3
+    mass: 0.1
   },
   edges: {
     smooth: { type: "continuous", roundness: 1 },
@@ -70,9 +72,12 @@ network.on("stabilizationIterationsDone", () => {
 });
 
 let nodeCounter = 1;
-let addEdgeMode = false, deleteMode = false;
-let labelNodeMode = false, colorNodeMode = false;
-let fromNode = null, rigidGraph = false;
+let addEdgeMode = false;
+let deleteMode = false;
+let labelNodeMode = false;
+let colorNodeMode = false;
+let fromNode = null;
+let rigidGraph = false;
 
 document.getElementById('addNodeBtn').addEventListener('click', () => {
   resetModes();
@@ -165,6 +170,25 @@ document.getElementById('dsaturBtn').addEventListener('click', () => {
   dsaturColoring(k, 500);
 });
 
+/* New button: "Colour" -> DSATUR with k = delta+1 */
+document.getElementById('deltaColourBtn').addEventListener('click', () => {
+  resetModes();
+  let graphNodes = nodes.get();
+  if (!graphNodes.length) return;
+  let adj = {};
+  for (let n of graphNodes) adj[n.id] = new Set();
+  for (let e of edges.get()) {
+    adj[e.from].add(e.to);
+    adj[e.to].add(e.from);
+  }
+  let delta = 0;
+  for (let n of graphNodes) {
+    if (adj[n.id].size > delta) delta = adj[n.id].size;
+  }
+  let k = delta + 1;
+  dsaturColoring(k, 500);
+});
+
 network.on("click", params => {
   if (deleteMode) {
     if (params.nodes.length) nodes.remove(params.nodes[0]);
@@ -191,10 +215,10 @@ network.on("click", params => {
   else if (colorNodeMode && params.nodes.length) {
     let col = prompt("Enter new colour (hex or name):");
     if (col) {
-      let n = nodes.get(params.nodes[0]);
-      n.color = { border: 'black', background: col };
-      n.font = { color: 'white', align: 'center' };
-      nodes.update(n);
+      let no = nodes.get(params.nodes[0]);
+      no.color = { border: 'black', background: col };
+      no.font = { color: 'white', align: 'center' };
+      nodes.update(no);
     }
     resetModes();
   }
@@ -214,36 +238,33 @@ function resetModes() {
   labelNodeMode = false;
   colorNodeMode = false;
   fromNode = null;
-  if (!deleteMode) {
-    document.getElementById('deleteModeBtn').textContent = 'Delete Mode OFF';
-  }
+  if (!deleteMode) document.getElementById('deleteModeBtn').textContent = 'Delete Mode OFF';
   document.getElementById('addEdgeBtn').textContent = 'Add Edge';
   document.getElementById('labelNodeBtn').textContent = 'Label Node';
   document.getElementById('changeColorBtn').textContent = 'Change Colour';
 }
 
-/* DSATUR with step-by-step updates */
+/* DSATUR with step-by-step updates (unchanged) */
 function dsaturColoring(k, stepDelay) {
   let startTime = performance.now();
   let allNodes = nodes.get();
   if (!allNodes.length) return;
 
-  // Build adjacency list
+  // adjacency
   let adj = {};
-  for (let n of allNodes) adj[n.id] = new Set();
+  for (let nd of allNodes) adj[nd.id] = new Set();
   for (let e of edges.get()) {
     adj[e.from].add(e.to);
     adj[e.to].add(e.from);
   }
 
-  // color, saturation, degrees
   let colors = {}, saturation = {}, degrees = {};
-  for (let n of allNodes) {
-    colors[n.id] = -1;
-    saturation[n.id] = 0;
-    degrees[n.id] = adj[n.id].size;
+  for (let nd of allNodes) {
+    colors[nd.id] = -1;
+    saturation[nd.id] = 0;
+    degrees[nd.id] = adj[nd.id].size;
   }
-  let uncolored = new Set(allNodes.map(n => n.id));
+  let uncolored = new Set(allNodes.map(nd => nd.id));
   let usedColorSet = new Set();
 
   function updateSaturation(changedNode) {
@@ -258,21 +279,17 @@ function dsaturColoring(k, stepDelay) {
     }
   }
 
-  // End the DSATUR process and update #colorStats
   function endDSATUR(failed) {
     let endTime = performance.now();
     let dt = (endTime - startTime).toFixed(2);
     let colorCount = usedColorSet.size;
     let statsBox = document.getElementById('colorStats');
     statsBox.style.display = 'block';
-    statsBox.textContent = `Last coloring took ${dt} ms. Used ${colorCount} color(s)${failed ? ' (failed)' : ''}`;
+    statsBox.textContent = `Last coloring took ${dt} ms. Used ${colorCount} color(s)${failed ? ' (failed)' : ''}.`;
   }
 
   function dsaturStep() {
-    if (!uncolored.size) {
-      endDSATUR(false);
-      return;
-    }
+    if (!uncolored.size) { endDSATUR(false); return; }
     let maxSatNode = null, maxSat = -1;
     for (let nodeId of uncolored) {
       if (saturation[nodeId] > maxSat) {
@@ -282,13 +299,13 @@ function dsaturColoring(k, stepDelay) {
         if (degrees[nodeId] > degrees[maxSatNode]) maxSatNode = nodeId;
       }
     }
-    let usedColors = new Set();
+    let neighborColors = new Set();
     for (let nb of adj[maxSatNode]) {
-      if (colors[nb] >= 0) usedColors.add(colors[nb]);
+      if (colors[nb] >= 0) neighborColors.add(colors[nb]);
     }
     let colorAssigned = -1;
     for (let c = 0; c < k; c++) {
-      if (!usedColors.has(c)) {
+      if (!neighborColors.has(c)) {
         colorAssigned = c;
         break;
       }
@@ -303,14 +320,11 @@ function dsaturColoring(k, stepDelay) {
     uncolored.delete(maxSatNode);
     updateSaturation(maxSatNode);
 
-    // Update node color visually
     let ccol = pickColor(colorAssigned);
-    let nodeData = nodes.get(maxSatNode);
-    nodeData.color = { border: 'black', background: ccol };
-    nodeData.font = { color: 'white', align: 'center' };
-    nodes.update(nodeData);
-
-    // Next step
+    let nData = nodes.get(maxSatNode);
+    nData.color = { border: 'black', background: ccol };
+    nData.font = { color: 'white', align: 'center' };
+    nodes.update(nData);
     //setTimeout(dsaturStep, stepDelay);
     setTimeout(dsaturStep, 0);
   }
