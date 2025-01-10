@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vis.js Graph Tool</title>
+  <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.js"></script>
+  <style>
+    body { margin: 0; padding: 0; font-family: sans-serif; }
+    #container { display: flex; height: 100vh; }
+    #network { flex: 1; border: 1px solid #ccc; }
+    #controls { width: 200px; padding: 10px; background: #f4f4f4; }
+    button { display: block; margin-bottom: 8px; width: 100%; }
+  </style>
+</head>
+<body>
+<div id="container">
+  <div id="network"></div>
+  <div id="controls">
+    <button id="addNodeBtn">Add Node</button>
+    <button id="addEdgeBtn">Add Edge</button>
+    <button id="labelNodeBtn">Label Node</button>
+    <button id="deleteModeBtn">Delete Mode OFF</button>
+    <button id="changeColorBtn">Change Colour</button>
+    <button id="kCompleteBtn">K-Complete Graph</button>
+    <button id="rigidGraphBtn">Rigid Graph: Off</button>
+    <button id="rGraphBtn">Random Graph</button>
+  </div>
+</div>
+<script>
+let nodes = new vis.DataSet();
+let edges = new vis.DataSet();
+let container = document.getElementById('network');
+let data = { nodes, edges };
+let edgeProb = 0.2; // Probability of edge between two nodes; tweakable
+
+let options = {
+  nodes: {
+    shape: 'circle',
+    size: 120,
+    color: { border: 'black', background: 'black' },
+    font: { color: 'white', align: 'center' },
+    mass: 0.3
+  },
+  edges: {
+    smooth: { type: "continuous", roundness: 1 },
+    color: { color: 'black' }
+  },
+  physics: {
+    stabilization: { iterations: 1 },
+    barnesHut: {
+      avoidOverlap: 0,
+      centralGravity: 0,
+      springConstant: 0
+    }
+  }
+};
+
+let network = new vis.Network(container, data, options);
+
+network.on("stabilizationIterationsDone", () => {
+  network.setOptions({ physics: false });
+});
+
+let nodeCounter = 1;
+let addEdgeMode = false;
+let deleteMode = false;
+let labelNodeMode = false;
+let colorNodeMode = false;
+let fromNode = null;
+let rigidGraph = false;
+
+document.getElementById('addNodeBtn').addEventListener('click', () => {
+  resetModes();
+  let id = nodeCounter++;
+  nodes.add({ id, label: '' + id });
+});
+
+document.getElementById('addEdgeBtn').addEventListener('click', () => {
+  resetModes();
+  addEdgeMode = true;
+  document.getElementById('addEdgeBtn').textContent = 'Select two nodes...';
+});
+
+document.getElementById('labelNodeBtn').addEventListener('click', () => {
+  resetModes();
+  labelNodeMode = true;
+  document.getElementById('labelNodeBtn').textContent = 'Select node to label';
+});
+
+document.getElementById('deleteModeBtn').addEventListener('click', () => {
+  if (!deleteMode) {
+    resetModes();
+    deleteMode = true;
+    document.getElementById('deleteModeBtn').textContent = 'Delete Mode ON';
+  } else {
+    deleteMode = false;
+    document.getElementById('deleteModeBtn').textContent = 'Delete Mode OFF';
+  }
+});
+
+document.getElementById('changeColorBtn').addEventListener('click', () => {
+  resetModes();
+  colorNodeMode = true;
+  document.getElementById('changeColorBtn').textContent = 'Select node to color';
+});
+
+document.getElementById('kCompleteBtn').addEventListener('click', () => {
+  resetModes();
+  let k = prompt("Number of nodes (k)?");
+  if (!k) return;
+  k = parseInt(k);
+  if (isNaN(k) || k < 1) return;
+  nodeCounter = 1;
+  nodes.clear();
+  edges.clear();
+  for (let i = 1; i <= k; i++) {
+    nodes.add({ id: i, label: '' + i });
+    nodeCounter++;
+  }
+  for (let i = 1; i <= k; i++) {
+    for (let j = i + 1; j <= k; j++) {
+      edges.add({ from: i, to: j });
+    }
+  }
+});
+
+document.getElementById('rigidGraphBtn').addEventListener('click', () => {
+  rigidGraph = !rigidGraph;
+  options.physics.barnesHut.springConstant = rigidGraph ? 0.1 : 0;
+  network.setOptions(options);
+  document.getElementById('rigidGraphBtn').textContent = rigidGraph ? 'Rigid Graph: On' : 'Rigid Graph: Off';
+});
+
+// New button for random graph generation
+document.getElementById('rGraphBtn').addEventListener('click', () => {
+  resetModes();
+  let n = prompt("Number of nodes?");
+  if (!n) return;
+  n = parseInt(n);
+  if (isNaN(n) || n < 1) return;
+  nodeCounter = 1;
+  nodes.clear();
+  edges.clear();
+  for (let i = 1; i <= n; i++) {
+    nodes.add({ id: i, label: '' + i });
+    nodeCounter++;
+  }
+  for (let i = 1; i <= n; i++) {
+    for (let j = i + 1; j <= n; j++) {
+      if (Math.random() < edgeProb) {
+        edges.add({ from: i, to: j });
+      }
+    }
+  }
+});
+
+network.on("click", params => {
+  if (deleteMode) {
+    if (params.nodes.length) nodes.remove(params.nodes[0]);
+    if (params.edges.length) edges.remove(params.edges[0]);
+    return;
+  }
+  if (addEdgeMode && params.nodes.length) {
+    if (!fromNode) {
+      fromNode = params.nodes[0];
+    } else {
+      edges.add({ from: fromNode, to: params.nodes[0] });
+      fromNode = null;
+      addEdgeMode = false;
+      document.getElementById('addEdgeBtn').textContent = 'Add Edge';
+    }
+  }
+  else if (labelNodeMode && params.nodes.length) {
+    let n = nodes.get(params.nodes[0]);
+    let newLabel = prompt("New label (leave blank to clear):");
+    n.label = newLabel ? n.id + ": " + newLabel : '' + n.id;
+    nodes.update(n);
+    resetModes();
+  }
+  else if (colorNodeMode && params.nodes.length) {
+    let col = prompt("Enter new colour (hex or name):");
+    if (col) {
+      let n = nodes.get(params.nodes[0]);
+      n.color = { border: 'black', background: col };
+      n.font = { color: 'white', align: 'center' };
+      nodes.update(n);
+    }
+    resetModes();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Delete') {
+    let selectedNodes = network.getSelectedNodes();
+    let selectedEdges = network.getSelectedEdges();
+    if (selectedNodes.length) nodes.remove(selectedNodes);
+    if (selectedEdges.length) edges.remove(selectedEdges);
+  }
+});
+
+function resetModes() {
+  addEdgeMode = false;
+  labelNodeMode = false;
+  colorNodeMode = false;
+  fromNode = null;
+  if (!deleteMode) {
+    document.getElementById('deleteModeBtn').textContent = 'Delete Mode OFF';
+  }
+  document.getElementById('addEdgeBtn').textContent = 'Add Edge';
+  document.getElementById('labelNodeBtn').textContent = 'Label Node';
+  document.getElementById('changeColorBtn').textContent = 'Change Colour';
+}
+</script>
+</body>
+</html>
