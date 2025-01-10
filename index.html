@@ -7,8 +7,16 @@
     body { margin: 0; padding: 0; font-family: sans-serif; }
     #container { display: flex; height: 100vh; }
     #network { flex: 1; border: 1px solid #ccc; }
-    #controls { width: 200px; padding: 10px; background: #f4f4f4; }
-    button { display: block; margin-bottom: 8px; width: 100%; }
+    #controls { width: 200px; padding: 10px; background: #f4f4f4; display: flex; flex-direction: column; }
+    button { margin-bottom: 8px; width: 100%; }
+    #colorStats {
+      margin-top: auto; 
+      padding: 6px; 
+      border: 1px solid #ccc; 
+      font-size: 14px; 
+      display: none; 
+      background: #fff;
+    }
   </style>
 </head>
 <body>
@@ -23,6 +31,8 @@
     <button id="kCompleteBtn">K-Complete Graph</button>
     <button id="rigidGraphBtn">Rigid Graph: Off</button>
     <button id="rGraphBtn">Random Graph</button>
+    <button id="dsaturBtn">DSATUR K-Color</button>
+    <div id="colorStats"></div>
   </div>
 </div>
 <script>
@@ -30,7 +40,7 @@ let nodes = new vis.DataSet();
 let edges = new vis.DataSet();
 let container = document.getElementById('network');
 let data = { nodes, edges };
-let edgeProb = 0.2; // Probability of edge between two nodes; tweakable
+let edgeProb = 0.4;
 
 let options = {
   nodes: {
@@ -55,18 +65,14 @@ let options = {
 };
 
 let network = new vis.Network(container, data, options);
-
 network.on("stabilizationIterationsDone", () => {
   network.setOptions({ physics: false });
 });
 
 let nodeCounter = 1;
-let addEdgeMode = false;
-let deleteMode = false;
-let labelNodeMode = false;
-let colorNodeMode = false;
-let fromNode = null;
-let rigidGraph = false;
+let addEdgeMode = false, deleteMode = false;
+let labelNodeMode = false, colorNodeMode = false;
+let fromNode = null, rigidGraph = false;
 
 document.getElementById('addNodeBtn').addEventListener('click', () => {
   resetModes();
@@ -130,7 +136,6 @@ document.getElementById('rigidGraphBtn').addEventListener('click', () => {
   document.getElementById('rigidGraphBtn').textContent = rigidGraph ? 'Rigid Graph: On' : 'Rigid Graph: Off';
 });
 
-// New button for random graph generation
 document.getElementById('rGraphBtn').addEventListener('click', () => {
   resetModes();
   let n = prompt("Number of nodes?");
@@ -146,11 +151,18 @@ document.getElementById('rGraphBtn').addEventListener('click', () => {
   }
   for (let i = 1; i <= n; i++) {
     for (let j = i + 1; j <= n; j++) {
-      if (Math.random() < edgeProb) {
-        edges.add({ from: i, to: j });
-      }
+      if (Math.random() < edgeProb) edges.add({ from: i, to: j });
     }
   }
+});
+
+document.getElementById('dsaturBtn').addEventListener('click', () => {
+  resetModes();
+  let k = prompt("K-colours?");
+  if (!k) return;
+  k = parseInt(k);
+  if (isNaN(k) || k < 1) return;
+  dsaturColoring(k, 500);
 });
 
 network.on("click", params => {
@@ -208,6 +220,108 @@ function resetModes() {
   document.getElementById('addEdgeBtn').textContent = 'Add Edge';
   document.getElementById('labelNodeBtn').textContent = 'Label Node';
   document.getElementById('changeColorBtn').textContent = 'Change Colour';
+}
+
+/* DSATUR with step-by-step updates */
+function dsaturColoring(k, stepDelay) {
+  let startTime = performance.now();
+  let allNodes = nodes.get();
+  if (!allNodes.length) return;
+
+  // Build adjacency list
+  let adj = {};
+  for (let n of allNodes) adj[n.id] = new Set();
+  for (let e of edges.get()) {
+    adj[e.from].add(e.to);
+    adj[e.to].add(e.from);
+  }
+
+  // color, saturation, degrees
+  let colors = {}, saturation = {}, degrees = {};
+  for (let n of allNodes) {
+    colors[n.id] = -1;
+    saturation[n.id] = 0;
+    degrees[n.id] = adj[n.id].size;
+  }
+  let uncolored = new Set(allNodes.map(n => n.id));
+  let usedColorSet = new Set();
+
+  function updateSaturation(changedNode) {
+    for (let nb of adj[changedNode]) {
+      if (colors[nb] < 0) {
+        let neighborColors = new Set();
+        for (let nn of adj[nb]) {
+          if (colors[nn] >= 0) neighborColors.add(colors[nn]);
+        }
+        saturation[nb] = neighborColors.size;
+      }
+    }
+  }
+
+  // End the DSATUR process and update #colorStats
+  function endDSATUR(failed) {
+    let endTime = performance.now();
+    let dt = (endTime - startTime).toFixed(2);
+    let colorCount = usedColorSet.size;
+    let statsBox = document.getElementById('colorStats');
+    statsBox.style.display = 'block';
+    statsBox.textContent = `Last coloring took ${dt} ms. Used ${colorCount} color(s)${failed ? ' (failed)' : ''}`;
+  }
+
+  function dsaturStep() {
+    if (!uncolored.size) {
+      endDSATUR(false);
+      return;
+    }
+    let maxSatNode = null, maxSat = -1;
+    for (let nodeId of uncolored) {
+      if (saturation[nodeId] > maxSat) {
+        maxSat = saturation[nodeId];
+        maxSatNode = nodeId;
+      } else if (saturation[nodeId] === maxSat) {
+        if (degrees[nodeId] > degrees[maxSatNode]) maxSatNode = nodeId;
+      }
+    }
+    let usedColors = new Set();
+    for (let nb of adj[maxSatNode]) {
+      if (colors[nb] >= 0) usedColors.add(colors[nb]);
+    }
+    let colorAssigned = -1;
+    for (let c = 0; c < k; c++) {
+      if (!usedColors.has(c)) {
+        colorAssigned = c;
+        break;
+      }
+    }
+    if (colorAssigned < 0) {
+      endDSATUR(true);
+      alert(`Graph is not colorable with ${k} colors (DSATUR failed).`);
+      return;
+    }
+    colors[maxSatNode] = colorAssigned;
+    usedColorSet.add(colorAssigned);
+    uncolored.delete(maxSatNode);
+    updateSaturation(maxSatNode);
+
+    // Update node color visually
+    let ccol = pickColor(colorAssigned);
+    let nodeData = nodes.get(maxSatNode);
+    nodeData.color = { border: 'black', background: ccol };
+    nodeData.font = { color: 'white', align: 'center' };
+    nodes.update(nodeData);
+
+    // Next step
+    //setTimeout(dsaturStep, stepDelay);
+    setTimeout(dsaturStep, 0);
+  }
+
+  function pickColor(idx) {
+    let palette = ['red','green','blue','orange','purple','cyan','magenta','yellow','gray','pink'];
+    if (idx < palette.length) return palette[idx];
+    return '#' + Math.floor(Math.random() * 16777215).toString(16);
+  }
+
+  dsaturStep();
 }
 </script>
 </body>
