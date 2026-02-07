@@ -1,0 +1,237 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+:root {
+  /* Algorithm visualization colors - keeping the palette */
+  --color-unvisited: #9E9E9E;
+  --color-current: #FFC107;
+  --color-visited: #4CAF50;
+  --color-path: #2196F3;
+  --color-highlight: #FF5722;
+
+  /* Graph coloring palette - keeping these vibrant for algorithm viz */
+  --palette-0: #E53935;
+  --palette-1: #43A047;
+  --palette-2: #1E88E5;
+  --palette-3: #FB8C00;
+  --palette-4: #8E24AA;
+  --palette-5: #00ACC1;
+  --palette-6: #D81B60;
+  --palette-7: #FFB300;
+  --palette-8: #546E7A;
+  --palette-9: #F06292;
+
+  /* UI colors - Clean mathematical aesthetic */
+  --bg-primary: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-tertiary: #f0f0f0;
+  --bg-canvas: #fcfcfc;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --border-color: #e5e5e5;
+  --border-strong: #d0d0d0;
+  --accent-color: #1a1a1a;
+  --accent-hover: #333333;
+
+  /* Typography */
+  --font-mono: 'IBM Plex Mono', 'SF Mono', 'Consolas', monospace;
+  --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Spacing */
+  --sidebar-width: 300px;
+  --header-height: 64px;
+  --control-height: 88px;
+
+  /* Transitions */
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Base button styles */
+button {
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  transition: all var(--transition-fast);
+  background: transparent;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-secondary {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-secondary);
+  border-color: var(--text-secondary);
+}
+
+.btn-icon {
+  padding: 8px;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.btn-icon:hover {
+  background-color: var(--bg-tertiary);
+}
+
+/* Form elements */
+input, select {
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  background: var(--bg-primary);
+}
+
+input:focus, select:focus {
+  border-color: var(--text-secondary);
+}
+
+input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Range input styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  padding: 0;
+  border: none;
+  height: 20px;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--border-strong);
+  border-radius: 1px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--text-primary);
+  border-radius: 50%;
+  margin-top: -6px;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 2px;
+  background: var(--border-strong);
+  border-radius: 1px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--text-primary);
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Selection */
+::selection {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+/* Utility classes */
+.mono {
+  font-family: var(--font-mono);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

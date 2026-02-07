@@ -1,0 +1,51 @@
+.result {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  padding: 20px 28px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  z-index: 100;
+}
+
+.result.success {
+  border-color: var(--text-primary);
+}
+
+.result.failed {
+  border-color: #E53935;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.value {
+  font-family: var(--font-mono);
+  font-size: 48px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.failed .value {
+  font-size: 24px;
+  color: #E53935;
+}
+
+.detail {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  max-width: 200px;
+}

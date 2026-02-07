@@ -1,0 +1,198 @@
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sectionTitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.algorithmButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.algorithmButton:hover {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-strong);
+}
+
+.algorithmButtonActive {
+  border-color: var(--text-primary);
+  background-color: var(--bg-secondary);
+}
+
+.algorithmButton .algorithmName {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.algorithmComplexity {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* Config panel that expands below an algorithm button */
+.configPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  margin-top: -1px;
+}
+
+.configRadio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.configRadio input[type="radio"] {
+  accent-color: var(--text-primary);
+}
+
+.configInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 22px;
+}
+
+.configInput label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.configInput input[type="number"] {
+  width: 56px;
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-align: center;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.configSelect {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.configSelect label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.configSelect select {
+  padding: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.configHint {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.runButton {
+  padding: 8px 12px;
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+  border: 1px solid var(--text-primary);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-top: 4px;
+}
+
+.runButton:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.runButton:disabled {
+  cursor: not-allowed;
+}
+
+.currentAlgorithm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.algorithmLabel {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.algorithmStatus {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
